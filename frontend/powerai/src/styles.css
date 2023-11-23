@@ -1,0 +1,424 @@
+/* Combined Styles */
+@import url('https://fonts.googleapis.com/css2?family=Kdam+Thmor+Pro&family=Oswald&display=swap');
+body{
+  font-family: 'Oswald', sans-serif;
+}
+/* App.css */
+.login-container {
+    min-height: 100vh;
+    background-color: white;
+  }
+  
+  .login-form {
+    max-width: 500px;
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    background-color: #fff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  h2 {
+    text-align: center;
+    color: #333;
+  }
+  
+  label {
+    display: block;
+    margin-bottom: 10px;
+  }
+  
+  button:hover {
+    background-color: #0056b3;
+  }
+  
+/* Navbar styles */
+nav {
+    background-color: #7A918D;
+    padding: 10px;
+    min-height: 0;
+    display: flex;
+    justify-content: center; /* Center the content horizontally */
+  }
+  
+  nav ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+  }
+  
+  nav li {
+    margin: 0 20px;
+  }
+  
+  nav a, .profileLink {
+    text-decoration: none;
+    color: #000000;
+    font-weight: 500;
+    font-size: 1.2em;
+    transition: color 0.3s ease-in-out;
+  }
+  
+  nav a:hover {
+    color: #ffcc00; /* Change the hover color as needed */
+  }
+  .profileLink:hover{
+    color: #FF5964;
+  }
+  
+ /* ChatPage.css */
+#chat-container {
+    width: 600px;
+    position: absolute;
+    background-color: #333232;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    border: 1px solid #ccc;
+    padding: 20px;
+    border-radius: 8px;
+  }
+  
+  #chat-display {
+    width: 100%;
+    overflow-x: hidden;
+    height: 400px;
+    overflow-y: scroll;
+    border-bottom: 1px solid #ccc;
+    margin-bottom: 10px;
+    word-wrap: break-word;
+  }
+  .ai-message {
+    /* background-color: #0056b3; */
+    color: rgb(19, 186, 19); 
+  }
+  
+  .user-message {
+   /* Set user message color */
+    color: rgb(91, 91, 255);
+  }
+  
+  #user-input {
+    display: flex;
+  }
+  
+  #user-message {
+    background-color: black;
+    color: white; 
+    flex-grow: 1;
+    padding: 5px;
+    margin-right: 10px;
+  }
+  
+  #user-message:active{
+    border-color: yellow;
+  }
+
+  button {
+    padding: 8px 16px;
+    cursor: pointer;
+  }
+  .typing {
+    display: inline-block;
+    overflow: hidden;
+    font-size: 15px;
+    border-right: .15em solid #000; /* Adjust border thickness */
+    white-space: nowrap;
+    font-family: monospace; /* To ensure consistent character width */
+  }
+
+  @keyframes typing {
+    from {
+      width: 0;
+    }
+    to {
+      width: 100%;
+    }
+  }
+  
+/* Webkit browsers (Chrome, Safari, etc.) */
+#chat-display::-webkit-scrollbar {
+  width: 6px; /* Adjust the width of the scrollbar */
+
+}
+
+#chat-display::-webkit-scrollbar-thumb {
+  background-color: purple; /* Color of the scrollbar thumb */
+  border-radius: 4px; /* Rounded corners of the thumb */
+}
+
+#chat-display::-webkit-scrollbar-track {
+  background-color: rgb(142, 14, 202); /* Color of the scrollbar track */
+  border-radius: 4px;
+  margin-bottom: 15px;
+}
+
+
+  /* index.css */
+  :root {
+    --font-family: 'Inter', 'system-ui', 'Avenir', 'Helvetica', 'Arial', sans-serif;
+    --font-weight: 400;
+    --primary-color: #646cff;
+    --hover-color: #535bf2;
+    --background-color-light: #ffffff;
+    --background-color-dark: #1a1a1a;
+    width: 500px;
+  }
+  
+  body {
+    margin: 0;
+    width: 100vw;
+    min-height: 100vh;
+    font-family: var(--font-family);
+    line-height: 1.5;
+    font-weight: var(--font-weight);
+    color: rgba(0, 0, 0, 0.87);
+    background-color: var(--background-color-light);
+  }
+  
+  a {
+    font-weight: 500;
+    color: var(--primary-color);
+    text-decoration: none;
+  }
+  
+  a:hover {
+    color: var(--hover-color);
+  }
+  
+  h1 {
+    font-size: 3.2em;
+    line-height: 1.1;
+  }
+  
+  button {
+    border-radius: 8px;
+    border: 1px solid transparent;
+    padding: 0.6em 1.2em;
+    font-size: 1em;
+    font-weight: 500;
+    font-family: inherit;
+    background-color: var(--background-color-dark);
+    color: #fff;
+    cursor: pointer;
+    transition: border-color 0.25s;
+  }
+  
+  button:hover {
+    border-color: var(--primary-color);
+  }
+  
+  button:focus,
+  button:focus-visible {
+    outline: 4px auto -webkit-focus-ring-color;
+  }
+  
+  @media (prefers-color-scheme: light) {
+    :root {
+      color: #213547;
+      background-color: var(--background-color-light);
+    }
+    a:hover {
+      color: #747bff;
+    }
+    button {
+      background-color: #f9f9f9;
+      color: #1a1a1a;
+    }
+  }
+  
+  h2 {
+    margin: 0;
+    width: 100%;
+  }
+  
+  :root {
+    min-height: 500px;
+    min-width: 500px;
+  }
+  
+  /* LoginForm.css */
+body {
+    /* display: flex; */
+    /* align-items: center;
+    justify-content: center; */
+    position: relative;
+    background-color: #AAC0AA;
+    height: 100vh;
+    margin: auto;
+  }
+  
+  #main-box {
+    width: 300px;
+    box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color:#DCEED1;
+    padding: 30px;
+    border: 1px solid rgb(204, 204, 204)c5c;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  #main-box h2 {
+    font-size: 2em;
+  }
+  
+  #main-box label {
+    display: block;
+    margin-bottom: 15px;
+  }
+  
+  #main-box input {
+    width: calc(100% - 28px); /* Adjust the value based on your padding */
+    padding: 12px;
+    margin-bottom: 15px;
+    font-size: 1em;
+    background-color: #333232;
+    color: white;
+  }
+  
+  #main-box button {
+    width: 100%;
+    padding: 15px;
+    font-size: 1.2em;
+    background-color: #1a1a1a;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  
+  #main-box button:hover {
+    background-color: #646cff;
+  }
+body,html{
+  font-family: 'Oswald', sans-serif;
+  height: 100vh;
+  width: 100vw;
+}
+
+/* CustomAlert.css */
+.custom-alert {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: #fff;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+  padding: 20px;
+  z-index: 1000;
+}
+
+.alert-content {
+  text-align: center;
+}
+
+button {
+  padding: 10px;
+  margin-top: 10px;
+  cursor: pointer;
+}
+
+a:hover {
+  color: #ffd700; /* Change color on hover */
+  transition: 0.3s ease-in-out;
+}
+.fade-in {
+  animation: fadeIn ease-in-out 0.3s;
+}
+
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+body{
+  background: rgb(94,112,109);
+  background: linear-gradient(180deg, rgba(94,112,109,1) 0%, rgba(122,145,141,1) 39%, rgba(170,192,170,1) 100%);
+}
+/* #head{
+  background: rgb(94,112,109);
+  background: linear-gradient(180deg, rgba(94,112,109,1) 0%, rgba(122,145,141,1) 39%, rgba(170,192,170,1) 100%);
+} */
+
+#head{
+  text-align: center;
+}
+#head h2 {
+  width: fit-content;
+  display: inline-block;
+  font-size: 24px;
+  transition: 0.5s ease;
+}
+
+#head h2:hover {
+  cursor: pointer;
+  animation: colorChange 2s infinite; /* Using an animation called colorChange with a duration of 5 seconds and repeating infinitely */
+}
+
+@keyframes colorChange {
+  0% {
+    color: rgb(180, 255, 180);
+  }
+  25% {
+    color: rgb(255, 180, 180);
+  }
+  50% {
+    color: rgb(180, 180, 255);
+  }
+  75% {
+    color: rgb(255, 255, 180);
+  }
+  100% {
+    color: rgb(180, 255, 180);
+  }
+}
+
+
+nav{
+  background-color: transparent;
+}
+
+.app-container {
+  position: relative;
+}
+
+.profile-container {
+  position: relative;
+}
+
+.profile-image {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  margin-right: 5px;
+}
+
+.larger-overlay {
+  position: fixed;
+  z-index: 2;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: fit-content;
+  height: fit-content;
+  display: none;
+}
+
+.larger-overlay img {
+  width: 100px; /* Adjust the width as needed */
+  height: 100px; /* Adjust the height as needed */
+}
+
+.profile-container:hover .larger-overlay {
+  display: block;
+  backdrop-filter: blur(5px); /* Add your desired blur effect */
+}
