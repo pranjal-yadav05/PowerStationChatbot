@@ -1,4 +1,4 @@
-// routes/protected.js
+// routes/protected.mjs
 import { Router } from 'express';
 import authenticateJWT from '../middleware/authMiddleware.js';
 

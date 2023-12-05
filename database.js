@@ -15,10 +15,11 @@ import authRoutes from './routes/auth.js';
 import protectedRoutes from './routes/protected.js';
 import jwt from 'jsonwebtoken';
 // import bcrypt from 'bcrypt';
-import { secret, expiresIn } from './jwtConfig.js';
-
+export const secret = '12345';
+export const expiresIn = '1h';
+  
 const app = express();
-import MySQLStore from 'express-mysql-session';
+// import MySQLStore from 'express-mysql-session';
 
 // const sessionStore = new MySQLStore({
 //   /* your MySQL configuration options */
@@ -41,7 +42,7 @@ app.use('/auth', authRoutes);
 app.use('/protected', protectedRoutes);
 
 
-const MySQLStoreInstance = new MySQLStore(session);
+// const MySQLStoreInstance = new MySQLStore(session);
 
 const generateOTP = () => {
   return Math.floor(100000 + Math.random() * 900000);
@@ -82,17 +83,17 @@ connection.connect((err) => {
 });
 
 
-const sessionStore = new MySQLStoreInstance({} /* session store options */, connection);
+// const sessionStore = new MySQLStoreInstance({} /* session store options */, connection);
 
-app.use(
-  session({
-    secret: '123', // Change this to a random, secret key
-    resave: false,
-    saveUninitialized: true,
-    cookie: { secure: false },
-    store: sessionStore, // Set secure to true in a production environment (HTTPS)
-  })
-);
+// app.use(
+//   session({
+//     secret: '123', // Change this to a random, secret key
+//     resave: false,
+//     saveUninitialized: true,
+//     cookie: { secure: false },
+//     store: sessionStore, // Set secure to true in a production environment (HTTPS)
+//   })
+// );
 
 
 app.get('/', (req, res) => {
@@ -318,7 +319,7 @@ app.post('/login', (req, res) => {
       } else if (result) {
         // req.session.username = results[0].username;
         // req.session.accesstype = results[0].accesstype;
-        console.log('After setting session variables:', req.session.username, req.session.accesstype);
+        // console.log('After setting session variables:', req.session.username, req.session.accesstype);
         const token = jwt.sign(
           { auth:true, username: results[0].username, accesstype: results[0].accesstype },
           secret,

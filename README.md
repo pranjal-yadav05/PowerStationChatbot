@@ -2,7 +2,7 @@
 
 Welcome to PowerStationChatbot – Your Intelligent Chatbot for Power Substations!
 <div align="center">
-  <img src="https://github.com/pranjal-yadav05/PowerStationChatbot/raw/main/test/data/substation3.jpg" alt="Substation Image" style="border-radius: 10px;">
+  <img src="https://github.com/pranjal-yadav05/PowerStationChatbot/blob/main/substation3.jpg" alt="Substation Image" style="border-radius: 10px;">
 </div>
 
 ## Overview

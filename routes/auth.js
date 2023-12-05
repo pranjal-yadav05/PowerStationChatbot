@@ -1,6 +1,6 @@
 // routes/auth.js
 import { Router } from 'express';
-import { compare } from 'bcrypt';
+// import { compare } from 'bcrypt';
 import mysql from 'mysql';
 import jwt from 'jsonwebtoken';
 // import bcrypt from 'bcrypt';
