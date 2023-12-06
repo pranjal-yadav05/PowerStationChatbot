@@ -256,15 +256,15 @@ app.get("/logout/:username",(req,res) => {
       res.send([{belongs : 'Error in database query'}]);
       return;
     }
-    req.session.destroy((err) => {
-      if (err) {
-        console.error('Error destroying session:', err);
-        res.status(500).send('Error destroying session');
-      } else {
-        console.log('logout success')
+    // req.session.destroy((err) => {
+    //   if (err) {
+    //     console.error('Error destroying session:', err);
+    //     res.status(500).send('Error destroying session');
+    //   } else {
+    //     console.log('logout success')
         res.send([{ belongs: 'Logout successful' }]);
-      }
-    });
+    //   }
+    // });
   })
 })
 
