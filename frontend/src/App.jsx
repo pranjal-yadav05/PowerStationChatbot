@@ -83,25 +83,6 @@ const App = () => {
     checkSessionStatus();
   }, [loggedIn]);
   
-  
-  // useEffect(() => {
-  //   // Check if the user is already logged in from localStorage
-  //   const storedToken = localStorage.getItem('token');
-
-  //   if (storedToken) {
-  //     // Decode the token to check its validity
-  //     const decodedToken = JSON.parse(atob(storedToken.split('.')[1]));
-  //     const expirationTime = decodedToken.exp * 1000; // Convert seconds to milliseconds
-
-  //     // Check if the token is expired
-  //     if (Date.now() < expirationTime) {
-  //       setLoggedIn(true);
-  //     } else {
-  //       // Token is expired, perform logout
-  //       logoutfunction();
-  //     }
-  //   }
-  // }, []);
 
 
   const logoutfunction = () => {

@@ -5,25 +5,22 @@ import mysql from "mysql";
 import path from "path";
 import { dirname } from "path";
 import { fileURLToPath } from "url";
-import session from "express-session";
 import axios from "axios";
 import nodemailer from "nodemailer";
 import cors from "cors";
 import { error } from "console";
 import multer from "multer";
 import authRoutes from "./routes/auth.js";
+import { Pinecone } from "@pinecone-database/pinecone";
 import protectedRoutes from "./routes/protected.js";
 import jwt from "jsonwebtoken";
-// import bcrypt from 'bcrypt';
-export const secret = "12345";
-export const expiresIn = "1h";
+import OpenAI from 'openai';
+import { DiscussServiceClient } from "@google-ai/generativelanguage";
+import { GoogleAuth } from "google-auth-library";
+import { secret, expiresIn } from './jwtConfig.js';
+
 
 const app = express();
-// import MySQLStore from 'express-mysql-session';
-
-// const sessionStore = new MySQLStore({
-//   /* your MySQL configuration options */
-// }, session);
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -40,11 +37,23 @@ app.use("/protected", protectedRoutes);
 
 // const MySQLStoreInstance = new MySQLStore(session);
 
+
+const pinecone = new Pinecone({
+  apiKey: "b85bf359-ca2e-4d0a-b78e-25a41b9af846",
+  // apiKey: '0f629be8-9909-4c3c-8b0f-20d4e5322ced',
+  environment: "gcp-starter",
+});
+
+const index = pinecone.Index("powerai");
+
+const model = new HuggingFaceTransformersEmbeddings({
+  modelName: "Xenova/all-MiniLM-L6-v2",
+});
+
+
 const generateOTP = () => {
   return Math.floor(100000 + Math.random() * 900000);
 };
-
-// const otpStorage = {};
 
 let transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
@@ -76,18 +85,6 @@ connection.connect((err) => {
   }
   console.log("Connected to MySQL as id " + connection.threadId);
 });
-
-// const sessionStore = new MySQLStoreInstance({} /* session store options */, connection);
-
-// app.use(
-//   session({
-//     secret: '123', // Change this to a random, secret key
-//     resave: false,
-//     saveUninitialized: true,
-//     cookie: { secure: false },
-//     store: sessionStore, // Set secure to true in a production environment (HTTPS)
-//   })
-// );
 
 app.get("/", (req, res) => {
   res.send("database is running....");
@@ -217,22 +214,6 @@ app.get("/verify/:username", (req, res) => {
     res.send({ otp: otpFromDatabase });
   });
 });
-// app.post('/send-email', (req, res) => {
-//   const mailOptions = {
-//     from: 'yadavpranjal2105@gmail.com',
-//     to: 'pranjalyadavpy212005@gmail.com',
-//     subject: 'THIS IS A TEST MAIL',
-//     text: 'THIS IS A TEST MAIL. IGNORE IF POSSIBLE',
-//   };
-
-//   transporter.sendMail(mailOptions, (error, info) => {
-//     if (error) {
-//       console.error('Error sending email:', error);
-//       return res.status(500).send(error.toString());
-//     }
-//     res.status(200).send('Email sent: ' + info.response);
-//   });
-// });
 
 var username;
 
@@ -631,6 +612,169 @@ app.get("/profilePic/:username", (req, res) => {
     res.send(results[0].profilepic);
   });
 });
+
+function splitTextIntoChunks(text, chunkSize, overlapSize) {
+  const chunks = [];
+  const textLength = text.length;
+
+  for (let i = 0; i < textLength; i += chunkSize - overlapSize) {
+    const chunk = text.slice(i, i + chunkSize);
+    chunks.push(chunk);
+  }
+
+  return chunks;
+}
+
+app.post("/process-input", async (req, res) => {
+  const userInput = req.body.input;
+  const username = req.body.username;
+  const queryVector = await model.embedQuery(userInput);
+  const queryResults = await index.query({
+    vector: queryVector,
+    topK: 5, // Number of top results to return
+  });
+  // console.log(queryResults);
+  // console.log( queryResults)
+  // var context = chunks[queryResults.matches[0].id];
+  var context;
+  const query = `SELECT chunk FROM chunks WHERE chunkid = (?) AND adminid IN (SELECT authority FROM relation WHERE belongs = (?)) `
+  for(let i=0;i<5;i++){  
+    connection.query(query,[queryResults.matches[i].id,username],(err,results)=>{
+      if(err){
+        res.send({message:'error in query'})
+        return;
+      }
+      // console.log(results[0].chunk);
+      context += results[0].chunk;
+      // res.send(results);
+
+    })
+  }
+
+  // OpenAI.apiKey = 'OPENAI_API_KEY';
+  // const openai = new OpenAI();
+  // // Function to ask a question and get the answer
+  // async function askQuestion(context, question) {
+  //   // Set the model and prompt
+  //   const model = 'gpt-3.5-turbo';
+  //   const prompt = `(answer this question using context below) \n context: ${context} \n question: ${question}`;
+
+  //   // Make the API request
+  //   const response = await openai.chat.completions.create({
+  //     model:model,
+  //     // prompt:prompt,
+  //     messages:[{ role: "user", content: prompt}],
+  //     temperature: 0.7,
+  //     max_tokens: 1024,
+  //   });
+
+  //   // Extract and return the answer
+  //   console.log(response.choices[0].message.content)
+  //   const answer = response.choices[0].message.content;
+  //   return answer;
+  // }
+  
+  // // Example usage
+  // (async () => {
+  //   const answer = await askQuestion(context, userInput);
+  //   console.log(`Question: ${userInput}`);
+  //   console.log(`Answer: ${answer}`);
+  //   res.send(answer)
+  // })();
+
+  const MODEL_NAME = "models/chat-bison-001";
+  const API_KEY = 'PALM_API_KEY';
+
+  const client = new DiscussServiceClient({
+    authClient: new GoogleAuth().fromAPIKey(API_KEY),
+  });
+
+  (async()=>{
+    const result = await client.generateMessage({
+      model: MODEL_NAME, // Required. The model to use to generate the result.
+      temperature: 0.2, // Optional. Value `0.0` always uses the highest-probability result.
+      candidateCount: 1, // Optional. The number of candidate results to generate.
+      prompt: {
+        // optional, preamble context to prime responses
+        context: `
+        Your primary purpose is to provide information and assistance related to power substations and the SMP (Substation Maintenance Procedures) manual. Please adhere to the following guidelines:
+      1. Focus on answering questions related to power substations, their components, maintenance procedures, and relevant technical details.
+      2. Do not respond to questions unrelated to power substations or the SMP manual.
+      3. If a question is unclear or ambiguous, politely ask for clarification or provide a general overview related to power substations.
+      4. Engage users in a helpful and informative manner.
+      5. Prioritize safety information in responses, especially when discussing maintenance procedures or potential risks.
+      6. Clearly state if the information provided is based on the SMP manual or general knowledge within the field of power substations. Encourage users to consult professionals for critical decisions or if they are dealing with real-world scenarios.
+        ` +'\n fetched context for the question from manual: ' +context,
+        // Optional. Examples for further fine-tuning of responses.
+  //       examples: [
+  //         {
+  //           input: { content: "What is the capital of California?" },
+  //           output: {
+  //             content:
+  //               `If the capital of California is what you seek,
+  // Sacramento is where you ought to peek.`,
+  //           },
+  //         },
+  //       ],
+        // Required. Alternating prompt/response messages.
+        messages: [{ content: userInput }],
+      },
+  });
+  
+    // console.log(result[0].candidates[0].content);
+    res.send(result[0].candidates[0].content);
+  }
+  )();
+    
+});
+var chunks = []
+
+app.post('/upload', async (req, res) => {
+  try {
+    if (!req.files || Object.keys(req.files).length === 0) {
+      return res.status(400).json({ error: 'No files were uploaded.' });
+    }
+
+    const pdfFile = req.files.pdf;
+    const pdfData = await pdfParse(pdfFile.data);
+    console.log("before splitting");
+    // res.json({ text: pdfData.text });
+    
+    
+    chunks = splitTextIntoChunks(pdfData.text, 1000, 0);
+    console.log("created chunks", chunks);
+    
+    // axios.post("http://localhost:3001/insert-chunks", {
+    //   chunks : chunks
+    // })
+    // .then((response) => {
+    //   console.log(response);
+    // });
+
+    // await uploadtodb(chunks);
+
+    res.send({message:'uploaded the file to database.'});
+    } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+
+
+
+// const arr = ['The quick brown fox jumps over the lazy dog','The lazy dog lies in the sun','The quick brown fox is a furry animal','I love to eat pizza','Pizza is my favorite food','I hate pizza','The sky is blue','The grass is green','The sun is yellow'];
+async function uploadtodb(chunks){
+  const embed = [];
+  const arr = chunks;
+  var i = 0;
+  console.log(chunks.length)
+  // await pinecone.index('powerai').deleteAll();
+  for(i=0;i<chunks.length;i++){
+    embed[i] = {id:i+"",values: await model.embedQuery(arr[i])};    
+  }
+  index.upsert(embed);
+}
 
 app.get("/userData/:username", (req, res) => {
   const username = req.params;

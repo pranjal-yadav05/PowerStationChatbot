@@ -121,10 +121,10 @@ nav {
   }
   .typing {
     display: inline-block;
+    white-space: pre-wrap; 
     overflow: hidden;
     font-size: 15px;
     border-right: .15em solid #000; /* Adjust border thickness */
-    white-space: nowrap;
     font-family: monospace; /* To ensure consistent character width */
   }
 
