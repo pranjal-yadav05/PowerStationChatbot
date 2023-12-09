@@ -770,32 +770,26 @@ var chunks = []
 
 app.post('/upload', async (req, res) => {
   try {
-    if (!req.files || Object.keys(req.files).length === 0) {
-      return res.status(400).json({ error: 'No files were uploaded.' });
-    }
+    // Access the file buffer
+    const pdfBuffer = req.file.buffer;
 
-    const pdfFile = req.files.pdf;
-    const pdfData = await pdfParse(pdfFile.data);
-    console.log("before splitting");
-    // res.json({ text: pdfData.text });
+    // Parse the PDF content
+    const pdfData = await pdfParse(pdfBuffer);
     
-    
-    chunks = splitTextIntoChunks(pdfData.text, 1000, 0);
-    console.log("created chunks", chunks);
-    
-    // axios.post("http://localhost:3001/insert-chunks", {
-    //   chunks : chunks
-    // })
-    // .then((response) => {
-    //   console.log(response);
-    // });
+    // Extract text from the parsed PDF data
+    const pdfText = pdfData.text;
 
-    // await uploadtodb(chunks);
+    chunks = splitTextIntoChunks(pdfText, 1000, 200);
 
-    res.send({message:'uploaded the file to database.'});
-    } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Internal server error' });
+    // await uploadtodb(chunks);  upload to pinecone
+
+    // const response = await axios.post('http://localhost:3001/insert-chunks',{chunks:chunks})
+    // console.log(response.data.message)
+    
+    res.status(200).json({ success: true, message: 'PDF successfully processed' });
+  } catch (error) {
+    console.error('Error processing PDF:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
   }
 });
 
