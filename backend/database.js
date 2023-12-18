@@ -14,12 +14,24 @@ import authRoutes from "./routes/auth.js";
 import { Pinecone } from "@pinecone-database/pinecone";
 import protectedRoutes from "./routes/protected.js";
 import jwt from "jsonwebtoken";
-import OpenAI from 'openai';
-import { DiscussServiceClient } from "@google-ai/generativelanguage";
-import { GoogleAuth } from "google-auth-library";
-import { secret, expiresIn } from './jwtConfig.js';
-
-
+import { OpenAI } from "langchain/llms/openai";
+import { secret, expiresIn } from "./jwtConfig.js";
+import { HuggingFaceTransformersEmbeddings } from "langchain/embeddings/hf_transformers";
+import { BufferWindowMemory } from "langchain/memory";
+import { ConversationChain } from "langchain/chains";
+// import { PromptTemplate } from "langchain/prompts";
+import {
+  ChatPromptTemplate,
+  PromptTemplate,
+  SystemMessagePromptTemplate,
+  AIMessagePromptTemplate,
+  HumanMessagePromptTemplate,
+} from "langchain/prompts";
+import { AIMessage, HumanMessage, SystemMessage } from "langchain/schema";
+import {
+  FewShotPromptTemplate,
+  FewShotChatMessagePromptTemplate,
+} from "langchain/prompts";
 const app = express();
 
 const __filename = fileURLToPath(import.meta.url);
@@ -37,9 +49,8 @@ app.use("/protected", protectedRoutes);
 
 // const MySQLStoreInstance = new MySQLStore(session);
 
-
 const pinecone = new Pinecone({
-  apiKey: "b85bf359-ca2e-4d0a-b78e-25a41b9af846",
+  apiKey: "YOUR_API_KEY", // b85bf359-ca2e-4d0a-b78e-25a41b9af846
   // apiKey: '0f629be8-9909-4c3c-8b0f-20d4e5322ced',
   environment: "gcp-starter",
 });
@@ -49,7 +60,6 @@ const index = pinecone.Index("powerai");
 const model = new HuggingFaceTransformersEmbeddings({
   modelName: "Xenova/all-MiniLM-L6-v2",
 });
-
 
 const generateOTP = () => {
   return Math.floor(100000 + Math.random() * 900000);
@@ -625,6 +635,55 @@ function splitTextIntoChunks(text, chunkSize, overlapSize) {
   return chunks;
 }
 
+var context = "global : ";
+import { promisify } from "util";
+
+const queryAsync = promisify(connection.query).bind(connection);
+
+async function get_chunck(username, queryResults) {
+  const chunks = [];
+  for (let i = 0; i < 2; i++) {
+    const query = `SELECT chunk FROM chunks WHERE chunkid = (?) AND adminid IN (SELECT authority FROM relation WHERE belongs = (?)) `;
+    try {
+      const results = await queryAsync(query, [
+        queryResults.matches[i].id,
+        username,
+      ]);
+      if (results.length > 0) {
+        chunks.push(results[0].chunk);
+      }
+    } catch (err) {
+      console.error("Error in query:", err);
+      throw err;
+    }
+  }
+  return chunks.join("");
+}
+
+const openai_model = new OpenAI({
+  openAIApiKey: "YOUR_API_KEY",
+  temperature: 0.7,
+});
+
+var CHAT_HISTORY = new BufferWindowMemory({
+  k: 3,
+});
+
+var CHAIN = new ConversationChain({
+  llm: openai_model,
+  memory: CHAT_HISTORY,
+});
+
+const promptTemplate = PromptTemplate.fromTemplate(
+  "You are a Lead Substation Maintenance Technician that only answers technical queries related to electrical engineering and power substation maintenance procedures in a sophisticated format by refering to the given context, context and query delimited by triple back ticks. Politely refuse to provide answer in humorous manner if the question is not related to the  given context:```{prompt_context}``` query:```{inp}```"
+);
+
+const troubleshootTemplate = PromptTemplate.fromTemplate(
+  "If the query requires troubleshooting:\nFirstly identify the type of equipment(s) that require troubleshooting from the following query which is delimited by triple backticks.\nProvide the identified equipment(s) in one or two words.\nProvide a step-by-step guide for troubleshooting the issue in a substation.\nStart with the initial checks and proceed systematically.\nQuery: ```{userQuery}```"
+);
+
+// Prompt Templates ...
+
 app.post("/process-input", async (req, res) => {
   const userInput = req.body.input;
   const username = req.body.username;
@@ -633,149 +692,33 @@ app.post("/process-input", async (req, res) => {
     vector: queryVector,
     topK: 5, // Number of top results to return
   });
-  // console.log(queryResults);
-  // console.log( queryResults)
-  // var context = chunks[queryResults.matches[0].id];
-  var context;
-  const query = `SELECT chunk FROM chunks WHERE chunkid = (?) AND adminid IN (SELECT authority FROM relation WHERE belongs = (?)) `
-  for(let i=0;i<5;i++){  
-    connection.query(query,[queryResults.matches[i].id,username],(err,results)=>{
-      if(err){
-        res.send({message:'error in query'})
-        return;
-      }
-      // console.log(results[0].chunk);
-      context += results[0].chunk;
-      // res.send(results);
 
-    })
-  }
+  context = await get_chunck(username, queryResults);
 
-  // OpenAI.apiKey = 'OPENAI_API_KEY';
-  // const openai = new OpenAI();
-  // // Function to ask a question and get the answer
-  // async function askQuestion(context, question) {
-  //   // Set the model and prompt
-  //   const model = 'gpt-3.5-turbo';
-  //   const prompt = `(answer this question using context below) \n context: ${context} \n question: ${question}`;
-
-  //   // Make the API request
-  //   const response = await openai.chat.completions.create({
-  //     model:model,
-  //     // prompt:prompt,
-  //     messages:[{ role: "user", content: prompt}],
-  //     temperature: 0.7,
-  //     max_tokens: 1024,
-  //   });
-
-  //   // Extract and return the answer
-  //   console.log(response.choices[0].message.content)
-  //   const answer = response.choices[0].message.content;
-  //   return answer;
-  // }
-  
-  // // Example usage
-  // (async () => {
-  //   const answer = await askQuestion(context, userInput);
-  //   console.log(`Question: ${userInput}`);
-  //   console.log(`Answer: ${answer}`);
-  //   res.send(answer)
-  // })();
-
-  const MODEL_NAME = "models/chat-bison-001";
-  const API_KEY = 'PALM_API_KEY';
-
-  const client = new DiscussServiceClient({
-    authClient: new GoogleAuth().fromAPIKey(API_KEY),
+  const final_prompt = await promptTemplate.format({
+    prompt_context: context,
+    inp: userInput,
+  }) + await troubleshootTemplate.format({
+    userQuery: userInput,
   });
 
-  (async()=>{
-    const result = await client.generateMessage({
-      model: MODEL_NAME, // Required. The model to use to generate the result.
-      temperature: 0.2, // Optional. Value `0.0` always uses the highest-probability result.
-      candidateCount: 1, // Optional. The number of candidate results to generate.
-      prompt: {
-        // optional, preamble context to prime responses
-        context: `
-        Your primary purpose is to provide information and assistance related to power substations and the SMP (Substation Maintenance Procedures) manual. Please adhere to the following guidelines:
-      1. Focus on answering questions related to power substations, their components, maintenance procedures, and relevant technical details.
-      2. Do not respond to questions unrelated to power substations or the SMP manual.
-      3. If a question is unclear or ambiguous, politely ask for clarification or provide a general overview related to power substations.
-      4. Engage users in a helpful and informative manner.
-      5. Prioritize safety information in responses, especially when discussing maintenance procedures or potential risks.
-      6. Clearly state if the information provided is based on the SMP manual or general knowledge within the field of power substations. Encourage users to consult professionals for critical decisions or if they are dealing with real-world scenarios.
-        ` +'\n fetched context for the question from manual: ' +context,
-        // Optional. Examples for further fine-tuning of responses.
-  //       examples: [
-  //         {
-  //           input: { content: "What is the capital of California?" },
-  //           output: {
-  //             content:
-  //               `If the capital of California is what you seek,
-  // Sacramento is where you ought to peek.`,
-  //           },
-  //         },
-  //       ],
-        // Required. Alternating prompt/response messages.
-        messages: [{ content: userInput }],
-      },
+  let llm_res = await CHAIN.call({
+    input: final_prompt,
   });
-  
-    // console.log(result[0].candidates[0].content);
-    res.send(result[0].candidates[0].content);
-  }
-  )();
-    
-// const MODEL_NAME = "models/text-bison-001";
-// const API_KEY = "PALM_API_KEY";
 
-// const client = new TextServiceClient({
-//   authClient: new GoogleAuth().fromAPIKey(API_KEY),
-// });
-
-// const input = '';
-// const promptString = `input: what is a transformer?
-// output: A transformer is a device that transfers electric energy from one alternating-current circuit to one or more other circuits, either increasing (stepping up) or reducing (stepping down) the voltage.
-// input: ${userInput}
-// output:`;
-// const stopSequences = [];
-
-// client.generateText({
-//   // required, which model to use to generate the result
-//   model: MODEL_NAME,
-//   // optional, 0.0 always uses the highest-probability result
-//   temperature: 0.7,
-//   // optional, how many candidate results to generate
-//   candidateCount: 1,
-//   // optional, number of most probable tokens to consider for generation
-//   topK: 40,
-//   // optional, for nucleus sampling decoding strategy
-//   topP: 0.95,
-//   // optional, maximum number of output tokens to generate
-//   maxOutputTokens: 1024,
-//   // optional, sequences at which to stop model generation
-//   stopSequences: stopSequences,
-//   // optional, safety settings
-//   safetySettings: [{"category":"HARM_CATEGORY_DEROGATORY","threshold":"BLOCK_LOW_AND_ABOVE"},{"category":"HARM_CATEGORY_TOXICITY","threshold":"BLOCK_LOW_AND_ABOVE"},{"category":"HARM_CATEGORY_VIOLENCE","threshold":"BLOCK_MEDIUM_AND_ABOVE"},{"category":"HARM_CATEGORY_SEXUAL","threshold":"BLOCK_MEDIUM_AND_ABOVE"},{"category":"HARM_CATEGORY_MEDICAL","threshold":"BLOCK_MEDIUM_AND_ABOVE"},{"category":"HARM_CATEGORY_DANGEROUS","threshold":"BLOCK_MEDIUM_AND_ABOVE"}],
-//   prompt: {
-//     text: promptString,
-//   },
-// }).then(result => {
-//   console.log(result[0].candidates[0].output);
-//   res.send(result[0].candidates[0].output);
-// });
-
+  res.send(llm_res.response);
+  return;
 });
-var chunks = []
+var chunks = [];+
 
-app.post('/upload', async (req, res) => {
+app.post("/upload", async (req, res) => {
   try {
     // Access the file buffer
     const pdfBuffer = req.file.buffer;
 
     // Parse the PDF content
     const pdfData = await pdfParse(pdfBuffer);
-    
+
     // Extract text from the parsed PDF data
     const pdfText = pdfData.text;
 
@@ -785,26 +728,25 @@ app.post('/upload', async (req, res) => {
 
     // const response = await axios.post('http://localhost:3001/insert-chunks',{chunks:chunks})
     // console.log(response.data.message)
-    
-    res.status(200).json({ success: true, message: 'PDF successfully processed' });
+
+    res
+      .status(200)
+      .json({ success: true, message: "PDF successfully processed" });
   } catch (error) {
-    console.error('Error processing PDF:', error);
-    res.status(500).json({ success: false, message: 'Internal server error' });
+    console.error("Error processing PDF:", error);
+    res.status(500).json({ success: false, message: "Internal server error" });
   }
 });
 
-
-
-
 // const arr = ['The quick brown fox jumps over the lazy dog','The lazy dog lies in the sun','The quick brown fox is a furry animal','I love to eat pizza','Pizza is my favorite food','I hate pizza','The sky is blue','The grass is green','The sun is yellow'];
-async function uploadtodb(chunks){
+async function uploadtodb(chunks) {
   const embed = [];
   const arr = chunks;
   var i = 0;
-  console.log(chunks.length)
+  console.log(chunks.length);
   // await pinecone.index('powerai').deleteAll();
-  for(i=0;i<chunks.length;i++){
-    embed[i] = {id:i+"",values: await model.embedQuery(arr[i])};    
+  for (i = 0; i < chunks.length; i++) {
+    embed[i] = { id: i + "", values: await model.embedQuery(arr[i]) };
   }
   index.upsert(embed);
 }
