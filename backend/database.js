@@ -751,9 +751,108 @@ async function uploadtodb(chunks) {
   index.upsert(embed);
 }
 
-app.get("/userData/:username", (req, res) => {
-  const username = req.params;
-  const query = `SELECT accesstype`;
+app.post('/addmessages',(req,res)=>{
+  const username = req.body.username;
+  const question = req.body.question;
+  const answer = req.body.answer;
+
+  const query = `INSERT INTO chats(username, question, answer) VALUES (?,?,?)`;
+  connection.query(query,[username,question, answer], (err,result)=>{
+    if(err) { res.send('error in query'); return;}
+    res.send('Inserted into messages');
+  })
+})
+
+app.get('/getmessages/:username',(req,res)=>{
+  const username = req.params.username;
+  // console.log(username)
+  const query = `SELECT question, answer FROM chats WHERE username = (?) ORDER BY chatid DESC LIMIT 5`;
+  connection.query(query,[username], (err,result)=>{
+    if(err) { res.send('error in query'); return;}
+    result.reverse();
+    res.send(result);
+  })
+})
+
+app.post('/testgen',(req,res)=>{
+  const admin = req.body.adminid;
+  const test = req.body.test;
+
+  
+  console.log(test);
+
+  const query = `INSERT INTO tests(adminid, test) VALUES (?,?)`;
+  connection.query(query,[admin,test],(err,result)=>{
+    if(err){
+      console.log(err)
+      res.send('error in query');
+      return;
+    }
+    console.log('test inserted');
+    const query2 = `SELECT relation.belongs, logininfo.email
+    FROM relation
+    JOIN logininfo ON relation.belongs = logininfo.username
+    WHERE relation.authority = (?);
+    `;
+    connection.query(query2, [admin], (err, result)=>{
+      if(err){
+        res.send('error in query');
+        return;
+      }
+
+      const query2 = `` 
+      connection.query(
+      )
+
+      result.map((result)=>{
+        const mailOptions = {
+          from: "yadavpranjal2105@gmail.com",
+          to: result.email,
+          subject: "Test Created for you on PowerAI app",
+          text: `Hi ${result.belongs}, Test for you has been created! \n Please attempt as early as possible.`,
+        };
+    
+        // transporter.sendMail(mailOptions, (error, info) => {
+        //   if (error) {
+        //     console.error("Error sending email:", error);
+        //     return res.status(500).send("Error sending email.");
+        //   }
+    
+        //   res.status(200).send("email sent successfully.");
+        // });
+      })
+    })
+  })
+})
+
+app.post('/addres',(req,res)=>{
+  const username = req.body.username;
+  const result = req.body.result;
+  const testid = req.body.testid;
+
+  const query = `INSERT INTO testres(testid, username, result) VALUES (?,?,?)`;
+  connection.query(query,[testid,username,result],(err,result)=>{
+    if(err){
+      res.send('error in query')
+      return;
+    }
+    res.send('Result Received');
+  })
+})
+
+app.get('/gettests/:username', (req, res) => {
+  const username = req.params.username;
+  console.log('username')
+  const query = `SELECT test, time, testname, testid FROM tests WHERE adminid IN (SELECT authority FROM relation WHERE belongs = (?))`
+  console.log('inside gettest');
+  connection.query(query,[username],(err,result)=>{
+    if(err){
+      res.send('error in query');
+      return;
+    }
+    console.log(result)
+    res.json(result);
+  })
 });
 
 const PORT = 3001;
