@@ -314,6 +314,7 @@ const App = () => {
                 testSelected={testSelected}
                 setTestSelected={setTestSelected}
                 tests={tests}
+                setTimer={setTimer}
                 setTests={setTests}
                 inTestMode={inTestMode}
                 setInTestMode={setInTestMode}

@@ -2,8 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from 'axios';
 import CryptoJS from 'crypto-js';
 
-const ShowTests = ({ user, testSelected, setTestSelected, setInTestMode, setTests, tests, encrypt, decrypt }) => {
-  const [timer, setTimer] = useState(0);
+const ShowTests = ({ user, setTimer, testSelected, setTestSelected, setInTestMode, setTests, tests, encrypt, decrypt }) => {
 
   useEffect(() => {
     const fetchData = async () => {
